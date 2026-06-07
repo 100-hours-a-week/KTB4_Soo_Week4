@@ -10,4 +10,5 @@ public interface PostRepository {
     Optional<Post> findById(Long id);
     List<Post> findAll();
     void delete(Post post);
+    List<Post> findDraftsByUserId(Long userId);
 }

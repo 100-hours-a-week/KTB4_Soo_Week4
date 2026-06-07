@@ -37,4 +37,11 @@ public class MemoryPostRepository implements PostRepository{
     public void delete(Post post) {
         store.remove(post.getId());
     }
+
+    @Override
+    public List<Post> findDraftsByUserId(Long userId) {
+        return store.values().stream()
+                .filter(post -> post.getUserId().equals(userId) && "DRAFT".equals(post.getStatus()))
+                .toList();
+    }
 }

@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -57,6 +59,10 @@ public class PostService {
             Post savedPost = postRepository.save(newPost);
             return savedPost.getId();
         }
+    }
+
+    public List<Post> getMyDrafts(Long userId) {
+        return postRepository.findDraftsByUserId(userId);
     }
 
 }
