@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import ktb.soo.project.domain.post.dto.DraftCreateRequest;
 import ktb.soo.project.domain.post.dto.DraftUpdateRequest;
 import ktb.soo.project.domain.post.dto.PostCreateRequest;
+import ktb.soo.project.domain.post.dto.PostUpdateRequest;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.service.PostService;
 import ktb.soo.project.global.annotation.LoginUser;
@@ -51,5 +52,15 @@ public class PostController {
     public ApiResponse<List<Post>> getMyDrafts(@LoginUser Long userId) {
         List<Post> drafts = postService.getMyDrafts(userId);
         return ApiResponse.of("DRAFT_FETCH_SUCCESS", drafts);
+    }
+
+    @PatchMapping("/{postId}")
+    public ApiResponse<Long> updatePost(
+            @LoginUser Long userId,
+            @PathVariable Long postId,
+            @RequestBody @Valid PostUpdateRequest request) {
+
+        Long updatedPostId = postService.updatePost(userId, postId, request);
+        return ApiResponse.of("POST_UPDATE_SUCCESS", updatedPostId);
     }
 }

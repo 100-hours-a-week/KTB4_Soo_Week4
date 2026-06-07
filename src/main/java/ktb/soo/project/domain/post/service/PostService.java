@@ -3,6 +3,7 @@ package ktb.soo.project.domain.post.service;
 import ktb.soo.project.domain.post.dto.DraftCreateRequest;
 import ktb.soo.project.domain.post.dto.DraftUpdateRequest;
 import ktb.soo.project.domain.post.dto.PostCreateRequest;
+import ktb.soo.project.domain.post.dto.PostUpdateRequest;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.repository.PostRepository;
 import ktb.soo.project.global.exception.BusinessException;
@@ -63,6 +64,20 @@ public class PostService {
 
     public List<Post> getMyDrafts(Long userId) {
         return postRepository.findDraftsByUserId(userId);
+    }
+
+    public Long updatePost(Long userId, Long postId, PostUpdateRequest request) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN);
+        }
+
+        post.update(request.getTitle(), request.getContent());
+
+        Post savedPost = postRepository.save(post);
+        return savedPost.getId();
     }
 
 }
