@@ -80,4 +80,14 @@ public class PostService {
         return savedPost.getId();
     }
 
+    public void deletePost(Long userId, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN);
+        }
+
+        postRepository.delete(post);
+    }
 }

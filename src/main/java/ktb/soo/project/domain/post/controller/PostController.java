@@ -63,4 +63,13 @@ public class PostController {
         Long updatedPostId = postService.updatePost(userId, postId, request);
         return ApiResponse.of("POST_UPDATE_SUCCESS", updatedPostId);
     }
+
+    @DeleteMapping("/{postId}")
+    public ApiResponse<Void> deletePost(
+            @LoginUser Long userId,
+            @PathVariable Long postId) {
+
+        postService.deletePost(userId, postId);
+        return ApiResponse.of("POST_DELETE_SUCCESS", null);
+    }
 }
