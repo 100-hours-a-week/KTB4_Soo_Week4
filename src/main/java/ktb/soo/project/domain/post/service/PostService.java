@@ -90,4 +90,14 @@ public class PostService {
 
         postRepository.delete(post);
     }
+
+    public void togglePostLike(Long userId, Long postId) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        post.toggleLike(userId);
+
+        postRepository.save(post);
+    }
 }

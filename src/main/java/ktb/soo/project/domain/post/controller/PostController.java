@@ -72,4 +72,14 @@ public class PostController {
         postService.deletePost(userId, postId);
         return ApiResponse.of("POST_DELETE_SUCCESS", null);
     }
+
+    @PostMapping("/{postId}/like")
+    public ApiResponse<Void> togglePostLike(
+            @LoginUser Long userId,
+            @PathVariable Long postId) {
+
+        postService.togglePostLike(userId, postId);
+        return ApiResponse.of("POST_LIKE_TOGGLE_SUCCESS", null);
+    }
+
 }
