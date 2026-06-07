@@ -15,7 +15,7 @@ public class Post {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updateAt;
-
+    private int hits = 0;
     private final Set<Long> likedUserIds = new HashSet<>();
 
     public Post(Long userId, String title, String content, String status) {
@@ -29,6 +29,10 @@ public class Post {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void incrementHits(){
+        this.hits += 1;
     }
 
     // 임시저장 덮어쓰기용

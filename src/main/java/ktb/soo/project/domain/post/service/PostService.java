@@ -1,11 +1,10 @@
 package ktb.soo.project.domain.post.service;
 
-import ktb.soo.project.domain.post.dto.DraftCreateRequest;
-import ktb.soo.project.domain.post.dto.DraftUpdateRequest;
-import ktb.soo.project.domain.post.dto.PostCreateRequest;
-import ktb.soo.project.domain.post.dto.PostUpdateRequest;
+import ktb.soo.project.domain.comment.repository.CommentRepository;
+import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.repository.PostRepository;
+import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +16,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
 
     // 최초 임시저장
     public Long createDraft(Long userId, DraftCreateRequest request) {
@@ -99,5 +100,21 @@ public class PostService {
         post.toggleLike(userId);
 
         postRepository.save(post);
+    }
+
+    public List<PostSliceResponse> getAllPublishedPosts() {
+        return postRepository.findAll().stream()
+                .filter(post -> "PUBLISHED".equals(post.getStatus()))
+                .sorted((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()))
+                .map(post -> {
+                    String nickname = userRepository.findById(post.getUserId())
+                            .map(user -> user.getNickname())
+                            .orElse("알 수 없는 사용자");
+
+                    int commentCount = commentRepository.findByPostId(post.getId()).size();
+
+                    return new PostSliceResponse(post, nickname, commentCount);
+                })
+                .toList();
     }
 }

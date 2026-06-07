@@ -1,10 +1,7 @@
 package ktb.soo.project.domain.post.controller;
 
 import jakarta.validation.Valid;
-import ktb.soo.project.domain.post.dto.DraftCreateRequest;
-import ktb.soo.project.domain.post.dto.DraftUpdateRequest;
-import ktb.soo.project.domain.post.dto.PostCreateRequest;
-import ktb.soo.project.domain.post.dto.PostUpdateRequest;
+import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.service.PostService;
 import ktb.soo.project.global.annotation.LoginUser;
@@ -82,4 +79,9 @@ public class PostController {
         return ApiResponse.of("POST_LIKE_TOGGLE_SUCCESS", null);
     }
 
+    @GetMapping
+    public ApiResponse<List<PostSliceResponse>> getAllPosts() {
+        List<PostSliceResponse> responses = postService.getAllPublishedPosts();
+        return ApiResponse.of("POST_FETCH_SUCCESS", responses);
+    }
 }
