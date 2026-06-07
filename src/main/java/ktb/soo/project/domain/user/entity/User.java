@@ -20,4 +20,12 @@ public class User {
     public void setId(Long id){
         this.id = id;
     }
+
+    public void updateNickname(String nickname){
+        this.nickname = nickname;
+    }
+
+    public void updatePassword(String password){
+        this.password = password;
+    }
 }

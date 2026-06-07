@@ -1,7 +1,9 @@
 package ktb.soo.project.domain.user.service;
 
 import ktb.soo.project.domain.user.dto.LoginRequest;
+import ktb.soo.project.domain.user.dto.PasswordUpdateRequest;
 import ktb.soo.project.domain.user.dto.SignUpRequest;
+import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
@@ -14,29 +16,24 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
 
-    public void signUp(SignUpRequest request) {
+    public void updateNickname(Long userId, UserUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("DUPLICATE_EMAIL", HttpStatus.BAD_REQUEST);
+        if (userRepository.existsByNickname(request.getNewNickname())) {
+            throw new BusinessException("DUPLICATE_NICKNAME", HttpStatus.CONFLICT);
         }
 
-        if (userRepository.existsByNickname(request.getNickname())) {
-            throw new BusinessException("DUPLICATE_NICKNAME", HttpStatus.BAD_REQUEST);
-        }
-
-        User newUser = new User(request.getEmail(), request.getPassword(), request.getNickname());
-        userRepository.save(newUser);
+        user.updateNickname(request.getNewNickname());
     }
 
-    public User login(LoginRequest request){
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST));
+    public void updatePassword(Long userId, PasswordUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        if (!user.getPassword().equals(request.getPassword())) {
-            throw new BusinessException("LOGIN_FAILED", HttpStatus.BAD_REQUEST);
-        }
-
-        return user;
+        user.updatePassword(request.getNewPassword());
     }
+
+
 
 }

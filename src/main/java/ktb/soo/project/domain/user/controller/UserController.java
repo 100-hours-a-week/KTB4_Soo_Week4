@@ -4,40 +4,38 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import ktb.soo.project.domain.user.dto.LoginRequest;
+import ktb.soo.project.domain.user.dto.PasswordUpdateRequest;
 import ktb.soo.project.domain.user.dto.SignUpRequest;
+import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.service.UserService;
+import ktb.soo.project.global.annotation.LoginUser;
 import ktb.soo.project.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
 
-    @PostMapping("/signup")
-    public ApiResponse<Void> signUp(@RequestBody @Valid SignUpRequest request) {
+    @PatchMapping("/me")
+    public ApiResponse<Void> updateMe(
+            @LoginUser Long userId,
+            @RequestBody @Valid UserUpdateRequest request) {
 
-        userService.signUp(request);
-
-        return ApiResponse.of("SIGNUP_SUCCESS", null);
+        userService.updateNickname(userId, request);
+        return ApiResponse.of("UPDATE_SUCCESS", null);
     }
 
-    @PostMapping("/login")
-    public ApiResponse<Void> login(
-            @RequestBody @Valid LoginRequest request,
-            HttpServletRequest servletRequest) { // 세션을 쓰기 위해 서블릿 리퀘스트를 주입받음
+    @PatchMapping("/me/password")
+    public ApiResponse<Void> updatePassword(
+            @LoginUser Long userId,
+            @RequestBody @Valid PasswordUpdateRequest request) {
 
-        User loginUser = userService.login(request);
-
-        HttpSession session = servletRequest.getSession(true);
-        session.setAttribute("LOGIN_USER", loginUser.getId());
-
-        return ApiResponse.of("LOGIN_SUCCESS", null);
+        userService.updatePassword(userId, request);
+        return ApiResponse.of("PASSWORD_UPDATE_SUCCESS", null);
     }
 
 }
