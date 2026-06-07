@@ -84,4 +84,10 @@ public class PostController {
         List<PostSliceResponse> responses = postService.getAllPublishedPosts();
         return ApiResponse.of("POST_FETCH_SUCCESS", responses);
     }
+
+    @GetMapping("/{postId}")
+    public ApiResponse<PostDetailResponse> getPostDetail(@PathVariable Long postId) {
+        PostDetailResponse response = postService.getPostDetail(postId);
+        return ApiResponse.of("POST_DETAIL_FETCH_SUCCESS", response);
+    }
 }

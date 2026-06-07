@@ -1,5 +1,6 @@
 package ktb.soo.project.domain.post.service;
 
+import ktb.soo.project.domain.comment.dto.CommentResponse;
 import ktb.soo.project.domain.comment.repository.CommentRepository;
 import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
@@ -10,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -116,5 +120,45 @@ public class PostService {
                     return new PostSliceResponse(post, nickname, commentCount);
                 })
                 .toList();
+    }
+
+    public PostDetailResponse getPostDetail(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        // 조회수 1 증가
+        post.incrementHits();
+        postRepository.save(post);
+
+        String postWriterNickname = userRepository.findById(post.getUserId())
+                .map(user -> user.getNickname())
+                .orElse("알 수 없는 사용자");
+
+        List<CommentResponse> allComments = commentRepository.findByPostId(postId).stream()
+                .map(comment -> {
+                    String commentWriterNickname = userRepository.findById(comment.getUserId())
+                            .map(user -> user.getNickname())
+                            .orElse("알 수 없는 사용자");
+                    return new CommentResponse(comment, commentWriterNickname);
+                })
+                .toList();
+
+        List<CommentResponse> rootComments = new ArrayList<>();
+
+        Map<Long, CommentResponse> commentMap = new HashMap<>();
+        allComments.forEach(c -> commentMap.put(c.getId(), c));
+
+        for (CommentResponse comment : allComments) {
+            if (comment.getParentId() == null) {
+                rootComments.add(comment);
+            } else {
+                CommentResponse parentComment = commentMap.get(comment.getParentId());
+                if (parentComment != null) {
+                    parentComment.getReplies().add(comment);
+                }
+            }
+        }
+
+        return new PostDetailResponse(post, postWriterNickname, rootComments, allComments.size());
     }
 }
