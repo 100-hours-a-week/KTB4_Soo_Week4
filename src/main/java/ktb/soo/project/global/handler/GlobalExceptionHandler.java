@@ -34,9 +34,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException exception) {
 
-        String errorCode = exception.getBindingResult()
-                .getFieldError()
-                .getDefaultMessage();
+        String errorCode = "INVALID_INPUT_VALUE";
+        String errorMessage = "입력값 검증에 실패했습니다.";
+
+        if(exception.getBindingResult().getFieldError() != null){
+            errorCode = exception.getBindingResult().getFieldError().getDefaultMessage();
+        }
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
