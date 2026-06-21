@@ -4,12 +4,16 @@ import ktb.soo.project.domain.comment.dto.CommentResponse;
 import ktb.soo.project.domain.comment.repository.CommentRepository;
 import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
+import ktb.soo.project.domain.post.entity.PostDraft;
+import ktb.soo.project.domain.post.repository.PostDraftRepository;
 import ktb.soo.project.domain.post.repository.PostRepository;
+import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,31 +22,39 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final PostDraftRepository postDraftRepository;
 
     // 최초 임시저장
+    @Transactional
     public Long createDraft(Long userId, DraftCreateRequest request) {
-        Post draftPost = new Post(userId, request.getTitle(), request.getContent(), "DRAFT");
-        Post savedPost = postRepository.save(draftPost);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+
+        PostDraft draftPost = new PostDraft(user, request.getTitle(), request.getContent());
+        PostDraft savedPost = postDraftRepository.save(draftPost);
+
         return savedPost.getId();
     }
 
     // 임시저장 덮어쓰기
+    @Transactional
     public Long updateDraft(Long userId, Long draftId, DraftUpdateRequest request) {
-        Post post = postRepository.findById(draftId)
+        PostDraft postDraft = postDraftRepository.findById(draftId)
                 .orElseThrow(() -> new BusinessException("DRAFT_NOT_FOUND", HttpStatus.NOT_FOUND, "임시저장 글을 찾을 수 없습니다."));
 
         // 임시저장한 본인이 맞는지 검증
-        if (!post.getUserId().equals(userId)) {
+        if (!postDraft.getUser().getId().equals(userId)) {
             throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "해당 글에 대한 권한이 없습니다.");
         }
 
-        post.update(request.getTitle(), request.getContent());
-        Post savedPost = postRepository.save(post);
-        return savedPost.getId();
+        postDraft.updateDraft(request.getTitle(), request.getContent());
+
+        return postDraft.getId();
     }
 
     // 최종 게시글 작성 및 발행 로직
