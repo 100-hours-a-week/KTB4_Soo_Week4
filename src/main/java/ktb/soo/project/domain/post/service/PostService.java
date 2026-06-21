@@ -113,15 +113,16 @@ public class PostService {
         return post.getId();
     }
 
+    @Transactional
     public void deletePost(Long userId, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
 
-        if (!post.getUserId().equals(userId)) {
+        if (!post.getUser().getId().equals(userId)) {
             throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "본인이 작성한 글만 수정할 수 있습니다.");
         }
 
-        postRepository.delete(post);
+        post.softDelete();
     }
 
     public void togglePostLike(Long userId, Long postId) {

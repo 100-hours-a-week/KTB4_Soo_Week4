@@ -57,6 +57,9 @@ public class Post extends BaseEntity {
         this.isEdited = true;
     }
 
+    public void softDelete(){
+        this.deletedAt = LocalDateTime.now();
+    }
 
     public void toggleLike(Long loginUserId) {
 
