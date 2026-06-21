@@ -3,7 +3,9 @@ package ktb.soo.project.global.config;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import ktb.soo.project.global.annotation.LoginUser;
+import ktb.soo.project.global.exception.BusinessException;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -29,10 +31,15 @@ public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver 
         HttpSession session = request.getSession(false);
 
         if (session == null) {
-            return null;
+            throw new BusinessException("UNAUTHORIZED_ACCESS", HttpStatus.UNAUTHORIZED);
         }
 
-        // 로그인할 때 세션에 저장해둔 유저의 식별자 ID를 꺼내서 컨트롤러에 던져줌
-        return session.getAttribute("LOGIN_USER");
+        Long userId = (Long) session.getAttribute("LOGIN_USER");
+
+        if (userId == null) {
+            throw new BusinessException("UNAUTHORIZED_ACCESS", HttpStatus.UNAUTHORIZED);
+        }
+
+        return userId;
     }
 }

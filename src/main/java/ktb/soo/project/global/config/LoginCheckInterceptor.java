@@ -11,9 +11,13 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class LoginCheckInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+
+        if ("GET".equalsIgnoreCase(method) && requestURI.startsWith("/api/v1/posts")) {
             return true;
         }
+
 
         // 세션이 없으면 로그인 안 한 상태
         HttpSession session = request.getSession(false);
