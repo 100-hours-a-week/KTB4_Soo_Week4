@@ -7,6 +7,8 @@ import ktb.soo.project.domain.post.service.PostService;
 import ktb.soo.project.global.annotation.LoginUser;
 import ktb.soo.project.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,76 +20,85 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/draft")
-    public ApiResponse<Long> createDraft(
+    public ResponseEntity<ApiResponse<Long>> createDraft(
             @LoginUser Long userId,
             @RequestBody DraftCreateRequest request) {
 
         Long draftId = postService.createDraft(userId, request);
-        return ApiResponse.of("DRAFT_SAVE_SUCCESS", draftId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.of("DRAFT_SAVE_SUCCESS", draftId));
     }
 
     @PutMapping("/draft/{draftId}")
-    public ApiResponse<Long> updateDraft(
+    public ResponseEntity<ApiResponse<Long>> updateDraft(
             @LoginUser Long userId,
             @PathVariable Long draftId,
             @RequestBody DraftUpdateRequest request) {
 
         Long updateDraftId =  postService.updateDraft(userId, draftId, request);
-        return ApiResponse.of("DRAFT_UPDATE_SUCCESS", updateDraftId);
+        return ResponseEntity.ok(ApiResponse.of("DRAFT_UPDATE_SUCCESS", updateDraftId));
     }
 
     @PostMapping
-    public ApiResponse<Long> createPost(
+    public ResponseEntity<ApiResponse<Long>> createPost(
             @LoginUser Long userId,
             @RequestBody @Valid PostCreateRequest request) {
 
         Long postId = postService.createPost(userId, request);
-        return ApiResponse.of("POST_CREATE_SUCCESS", postId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.of("POST_CREATE_SUCCESS", postId));
     }
 
     @GetMapping("/drafts")
-    public ApiResponse<List<Post>> getMyDrafts(@LoginUser Long userId) {
+    public ResponseEntity<ApiResponse<List<Post>>> getMyDrafts(@LoginUser Long userId) {
         List<Post> drafts = postService.getMyDrafts(userId);
-        return ApiResponse.of("DRAFT_FETCH_SUCCESS", drafts);
+        return ResponseEntity.ok(ApiResponse.of("DRAFT_FETCH_SUCCESS", drafts));
     }
 
     @PatchMapping("/{postId}")
-    public ApiResponse<Long> updatePost(
+    public ResponseEntity<ApiResponse<Long>> updatePost(
             @LoginUser Long userId,
             @PathVariable Long postId,
             @RequestBody @Valid PostUpdateRequest request) {
 
         Long updatedPostId = postService.updatePost(userId, postId, request);
-        return ApiResponse.of("POST_UPDATE_SUCCESS", updatedPostId);
+        return ResponseEntity.ok(ApiResponse.of("POST_UPDATE_SUCCESS", updatedPostId));
     }
 
     @DeleteMapping("/{postId}")
-    public ApiResponse<Void> deletePost(
+    public ResponseEntity<Void> deletePost(
             @LoginUser Long userId,
             @PathVariable Long postId) {
 
         postService.deletePost(userId, postId);
-        return ApiResponse.of("POST_DELETE_SUCCESS", null);
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
     }
 
     @PostMapping("/{postId}/like")
-    public ApiResponse<Void> togglePostLike(
+    public ResponseEntity<Void> togglePostLike(
             @LoginUser Long userId,
             @PathVariable Long postId) {
 
         postService.togglePostLike(userId, postId);
-        return ApiResponse.of("POST_LIKE_TOGGLE_SUCCESS", null);
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
     }
 
     @GetMapping
-    public ApiResponse<List<PostSliceResponse>> getAllPosts() {
+    public ResponseEntity<ApiResponse<List<PostSliceResponse>>> getAllPosts() {
         List<PostSliceResponse> responses = postService.getAllPublishedPosts();
-        return ApiResponse.of("POST_FETCH_SUCCESS", responses);
+        return ResponseEntity.ok(ApiResponse.of("POST_FETCH_SUCCESS", responses));
     }
 
     @GetMapping("/{postId}")
-    public ApiResponse<PostDetailResponse> getPostDetail(@PathVariable Long postId) {
+    public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(@PathVariable Long postId) {
         PostDetailResponse response = postService.getPostDetail(postId);
-        return ApiResponse.of("POST_DETAIL_FETCH_SUCCESS", response);
+        return ResponseEntity.ok(ApiResponse.of("POST_DETAIL_FETCH_SUCCESS", response));
+
     }
 }

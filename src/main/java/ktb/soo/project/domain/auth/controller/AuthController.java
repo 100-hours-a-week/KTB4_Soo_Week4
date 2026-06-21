@@ -9,6 +9,8 @@ import ktb.soo.project.domain.user.dto.SignUpRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,15 +23,17 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ApiResponse<Void> signUp(@RequestBody @Valid SignUpRequest request) {
+    public ResponseEntity<ApiResponse<Void>> signUp(@RequestBody @Valid SignUpRequest request) {
 
         authService.signUp(request);
 
-        return ApiResponse.of("SIGNUP_SUCCESS", null);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.of("SIGNUP_SUCCESS", null));
     }
 
     @PostMapping("/login")
-    public ApiResponse<Void> login(
+    public ResponseEntity<ApiResponse<Void>> login(
             @RequestBody @Valid LoginRequest request,
             HttpServletRequest servletRequest) { // 세션을 쓰기 위해 서블릿 리퀘스트를 주입받음
 
@@ -38,6 +42,6 @@ public class AuthController {
         HttpSession session = servletRequest.getSession(true);
         session.setAttribute("LOGIN_USER", loginUser.getId());
 
-        return ApiResponse.of("LOGIN_SUCCESS", null);
+        return ResponseEntity.ok(ApiResponse.of("LOGIN_SUCCESS", null));
     }
 }
