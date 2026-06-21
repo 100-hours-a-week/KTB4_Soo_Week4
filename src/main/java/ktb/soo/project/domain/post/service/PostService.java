@@ -5,7 +5,9 @@ import ktb.soo.project.domain.comment.repository.CommentRepository;
 import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.entity.PostDraft;
+import ktb.soo.project.domain.post.entity.PostHistory;
 import ktb.soo.project.domain.post.repository.PostDraftRepository;
+import ktb.soo.project.domain.post.repository.PostHistoryRepository;
 import ktb.soo.project.domain.post.repository.PostRepository;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
@@ -28,6 +30,7 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final PostDraftRepository postDraftRepository;
+    private final PostHistoryRepository postHistoryRepository;
 
     // 최초 임시저장
     @Transactional
@@ -58,22 +61,30 @@ public class PostService {
     }
 
     // 최종 게시글 작성 및 발행 로직
+    @Transactional
     public Long createPost(Long userId, PostCreateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+
+        // 임시저장된 글을 바탕으로 최종 등록을 할 경우
         if (request.getDraftId() != null) {
-            Post draftPost = postRepository.findById(request.getDraftId())
+            PostDraft postDraft = postDraftRepository.findById(request.getDraftId())
                     .orElseThrow(() -> new BusinessException("DRAFT_NOT_FOUND", HttpStatus.NOT_FOUND, "임시저장 글을 찾을 수 없습니다."));
 
-            if (!draftPost.getUserId().equals(userId)) {
+            if (!postDraft.getUser().getId().equals(userId)) {
                 throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "해당 글에 대한 권한이 없습니다.");
             }
 
-            draftPost.publish(request.getTitle(), request.getContent());
-            Post savedPost = postRepository.save(draftPost);
+            Post newPost = new Post(user, request.getTitle(), request.getContent(), request.getImage())
+            Post savedPost = postRepository.save(newPost);
+
+            postDraftRepository.delete(postDraft);
+
             return savedPost.getId();
 
         } else {
-            // 처음부터 바로 발행하는 경우
-            Post newPost = new Post(userId, request.getTitle(), request.getContent(), "PUBLISHED");
+            // 임시저장 없이 바로 발행할 경우
+            Post newPost = new Post(user, request.getTitle(), request.getContent(), request.getImage());
             Post savedPost = postRepository.save(newPost);
             return savedPost.getId();
         }
@@ -83,18 +94,23 @@ public class PostService {
         return postRepository.findDraftsByUserId(userId);
     }
 
+    @Transactional
     public Long updatePost(Long userId, Long postId, PostUpdateRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
 
-        if (!post.getUserId().equals(userId)) {
+        if (!post.getUser().getId().equals(userId)) {
             throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "본인이 작성한 글만 삭제할 수 있습니다.");
         }
 
-        post.update(request.getTitle(), request.getContent());
+        // 현재까지 쌓이 이력 개수 + 1해서 버전을 계산
+        int nextVersion = postHistoryRepository.countByPostId(postId) + 1;
+        PostHistory postHistory = new PostHistory(post, nextVersion);
+        postHistoryRepository.save(postHistory);
 
-        Post savedPost = postRepository.save(post);
-        return savedPost.getId();
+        post.updatePost(request.getTitle(), request.getContent(), request.getImage());
+
+        return post.getId();
     }
 
     public void deletePost(Long userId, Long postId) {

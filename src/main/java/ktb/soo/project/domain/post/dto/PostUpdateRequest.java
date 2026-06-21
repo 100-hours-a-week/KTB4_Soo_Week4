@@ -13,8 +13,11 @@ public class PostUpdateRequest {
     @NotBlank(message = "CONTENT_EMPTY")
     private String content;
 
-    public PostUpdateRequest(String title, String content) {
+    private String image;
+
+    public PostUpdateRequest(String title, String content, String image) {
         this.title = title;
         this.content = content;
+        this.image = image;
     }
 }

@@ -15,9 +15,12 @@ public class PostCreateRequest {
     @NotBlank(message = "CONTENT_EMPTY")
     private String content;
 
-    public PostCreateRequest(Long draftId, String title, String content) {
+    private String image;
+
+    public PostCreateRequest(Long draftId, String title, String content, String image) {
         this.draftId = draftId;
         this.title = title;
         this.content = content;
+        this.image = image;
     }
 }

@@ -1,64 +1,68 @@
 package ktb.soo.project.domain.post.entity;
 
+import jakarta.persistence.*;
+import ktb.soo.project.domain.user.entity.User;
+import ktb.soo.project.global.common.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
+@Entity
+@Table(name = "posts")
 @Getter
-public class Post {
+@NoArgsConstructor
+public class Post extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false)
     private String content;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updateAt;
-    private int hits = 0;
-    private final Set<Long> likedUserIds = new HashSet<>();
 
-    public Post(Long userId, String title, String content, String status) {
-        this.userId = userId;
+    private String image;
+
+    @Column(name = "is_edited", nullable = false)
+    private boolean isEdited = false;
+
+    @Column(name = "report_count", nullable = false)
+    private int reportCount = 0;
+
+    @Column(name = "is_blinded", nullable = false)
+    private boolean isBlinded = false;
+
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public Post(User user, String title, String content, String image) {
+        this.user = user;
         this.title = title;
         this.content = content;
-        this.status = status;
-        this.createdAt = LocalDateTime.now();
-        this.updateAt = LocalDateTime.now();
+        this.image = image;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void incrementHits(){
-        this.hits += 1;
-    }
-
-    // 임시저장 덮어쓰기용
-    public void update(String title, String content) {
+    public void updatePost(String title, String content, String image) {
         this.title = title;
         this.content = content;
-        this.updateAt = LocalDateTime.now();
+        this.image = image;
+        this.isEdited = true;
     }
 
-    // 임시저장 -> 게시글 발행
-    public void publish(String title, String content) {
-        this.title = title;
-        this.content = content;
-        this.status = "PUBLISHED";
-        this.updateAt = LocalDateTime.now();
-    }
 
     public void toggleLike(Long loginUserId) {
-        if (this.likedUserIds.contains(loginUserId)) {
-            this.likedUserIds.remove(loginUserId);
-        } else {
-            this.likedUserIds.add(loginUserId);
-        }
+
     }
 
     public int getLikeCount() {
-        return this.likedUserIds.size();
+
     }
 }
