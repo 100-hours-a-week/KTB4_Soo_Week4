@@ -31,13 +31,13 @@ public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver 
         HttpSession session = request.getSession(false);
 
         if (session == null) {
-            throw new BusinessException("UNAUTHORIZED_ACCESS", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException("UNAUTHORIZED_ACCESS", HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다.");
         }
 
         Long userId = (Long) session.getAttribute("LOGIN_USER");
 
         if (userId == null) {
-            throw new BusinessException("UNAUTHORIZED_ACCESS", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException("UNAUTHORIZED_ACCESS", HttpStatus.UNAUTHORIZED, "유효하지 않은 인증 정보입니다.");
         }
 
         return userId;

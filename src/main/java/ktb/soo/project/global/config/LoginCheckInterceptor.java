@@ -22,7 +22,7 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
         // 세션이 없으면 로그인 안 한 상태
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("LOGIN_USER") == null) {
-            throw new BusinessException("UNAUTHORIZED_USER", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException("UNAUTHORIZED_USER", HttpStatus.UNAUTHORIZED, "유효하지 않은 인증 정보입니다.");
         }
 
         return true; // 세션이 있으면 통과
