@@ -15,12 +15,12 @@ public class PostSliceResponse {
     private final LocalDateTime createdAt;
     private final String writerNickname;
 
-    public PostSliceResponse(Post post, String writerNickname, int commentCount) {
+    public PostSliceResponse(Post post, String writerNickname, int commentCount, int likeCount) {
         this.id = post.getId();
         this.title = post.getTitle();
-        this.likeCount = post.getLikedUserIds().size();
+        this.likeCount = likeCount;
         this.commentCount = commentCount;
-        this.hits = post.getHits();
+        this.hits = post.getViewCount();
         this.createdAt = post.getCreatedAt();
         this.writerNickname = writerNickname;
     }

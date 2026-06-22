@@ -148,17 +148,15 @@ public class PostService {
     }
 
     public List<PostSliceResponse> getAllPublishedPosts() {
-        return postRepository.findAll().stream()
-                .filter(post -> "PUBLISHED".equals(post.getStatus()))
-                .sorted((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()))
+        List<Post> posts = postRepository.findAllPublishedPostsWithUser();
+        return posts.stream()
                 .map(post -> {
-                    String nickname = userRepository.findById(post.getUserId())
-                            .map(user -> user.getNickname())
-                            .orElse("알 수 없는 사용자");
+                    String nickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
 
+                    int likeCount = postLikeRepository.countByPostId(post.getId());
                     int commentCount = commentRepository.findByPostId(post.getId()).size();
 
-                    return new PostSliceResponse(post, nickname, commentCount);
+                    return new PostSliceResponse(post, nickname, commentCount, likeCount);
                 })
                 .toList();
     }
