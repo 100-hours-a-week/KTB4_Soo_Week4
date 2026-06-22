@@ -6,8 +6,10 @@ import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.entity.PostDraft;
 import ktb.soo.project.domain.post.entity.PostHistory;
+import ktb.soo.project.domain.post.entity.PostLike;
 import ktb.soo.project.domain.post.repository.PostDraftRepository;
 import ktb.soo.project.domain.post.repository.PostHistoryRepository;
+import ktb.soo.project.domain.post.repository.PostLikeRepository;
 import ktb.soo.project.domain.post.repository.PostRepository;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
@@ -17,10 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostDraftRepository postDraftRepository;
     private final PostHistoryRepository postHistoryRepository;
+    private final PostLikeRepository postLikeRepository;
 
     // 최초 임시저장
     @Transactional
@@ -75,7 +77,7 @@ public class PostService {
                 throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "해당 글에 대한 권한이 없습니다.");
             }
 
-            Post newPost = new Post(user, request.getTitle(), request.getContent(), request.getImage())
+            Post newPost = new Post(user, request.getTitle(), request.getContent(), request.getImage());
             Post savedPost = postRepository.save(newPost);
 
             postDraftRepository.delete(postDraft);
@@ -90,9 +92,9 @@ public class PostService {
         }
     }
 
-    public List<Post> getMyDrafts(Long userId) {
-        return postRepository.findDraftsByUserId(userId);
-    }
+//    public List<Post> getMyDrafts(Long userId) {
+//        return postRepository.findDraftsByUserId(userId);
+//    }
 
     @Transactional
     public Long updatePost(Long userId, Long postId, PostUpdateRequest request) {
@@ -125,14 +127,24 @@ public class PostService {
         post.softDelete();
     }
 
+    @Transactional
     public void togglePostLike(Long userId, Long postId) {
-
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
 
-        post.toggleLike(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
 
-        postRepository.save(post);
+
+        // 유저가 이미 좋아요 누른 이력이 있는지 확인
+        Optional<PostLike> alreadyLike = postLikeRepository.findByUserIdAndPostId(userId, postId);
+
+        if (alreadyLike.isPresent()) {
+            postLikeRepository.delete(alreadyLike.get());
+        } else {
+            PostLike postLike = new PostLike(user, post);
+            postLikeRepository.save(postLike);
+        }
     }
 
     public List<PostSliceResponse> getAllPublishedPosts() {
@@ -150,44 +162,44 @@ public class PostService {
                 })
                 .toList();
     }
-
-    public PostDetailResponse getPostDetail(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
-
-        // 조회수 1 증가
-        post.incrementHits();
-        postRepository.save(post);
-
-        String postWriterNickname = userRepository.findById(post.getUserId())
-                .map(user -> user.getNickname())
-                .orElse("알 수 없는 사용자");
-
-        List<CommentResponse> allComments = commentRepository.findByPostId(postId).stream()
-                .map(comment -> {
-                    String commentWriterNickname = userRepository.findById(comment.getUserId())
-                            .map(user -> user.getNickname())
-                            .orElse("알 수 없는 사용자");
-                    return new CommentResponse(comment, commentWriterNickname);
-                })
-                .toList();
-
-        List<CommentResponse> rootComments = new ArrayList<>();
-
-        Map<Long, CommentResponse> commentMap = new HashMap<>();
-        allComments.forEach(c -> commentMap.put(c.getId(), c));
-
-        for (CommentResponse comment : allComments) {
-            if (comment.getParentId() == null) {
-                rootComments.add(comment);
-            } else {
-                CommentResponse parentComment = commentMap.get(comment.getParentId());
-                if (parentComment != null) {
-                    parentComment.getReplies().add(comment);
-                }
-            }
-        }
-
-        return new PostDetailResponse(post, postWriterNickname, rootComments, allComments.size());
-    }
+//
+//    public PostDetailResponse getPostDetail(Long postId) {
+//        Post post = postRepository.findById(postId)
+//                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
+//
+//        // 조회수 1 증가
+//        post.incrementHits();
+//        postRepository.save(post);
+//
+//        String postWriterNickname = userRepository.findById(post.getUserId())
+//                .map(user -> user.getNickname())
+//                .orElse("알 수 없는 사용자");
+//
+//        List<CommentResponse> allComments = commentRepository.findByPostId(postId).stream()
+//                .map(comment -> {
+//                    String commentWriterNickname = userRepository.findById(comment.getUserId())
+//                            .map(user -> user.getNickname())
+//                            .orElse("알 수 없는 사용자");
+//                    return new CommentResponse(comment, commentWriterNickname);
+//                })
+//                .toList();
+//
+//        List<CommentResponse> rootComments = new ArrayList<>();
+//
+//        Map<Long, CommentResponse> commentMap = new HashMap<>();
+//        allComments.forEach(c -> commentMap.put(c.getId(), c));
+//
+//        for (CommentResponse comment : allComments) {
+//            if (comment.getParentId() == null) {
+//                rootComments.add(comment);
+//            } else {
+//                CommentResponse parentComment = commentMap.get(comment.getParentId());
+//                if (parentComment != null) {
+//                    parentComment.getReplies().add(comment);
+//                }
+//            }
+//        }
+//
+//        return new PostDetailResponse(post, postWriterNickname, rootComments, allComments.size());
+//    }
 }
