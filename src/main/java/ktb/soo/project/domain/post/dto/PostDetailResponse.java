@@ -9,25 +9,24 @@ import java.util.List;
 
 @Getter
 public class PostDetailResponse {
-    private final Long id;
-    private final String title;
-    private final String content;
-    private final int likeCount;
-    private final int hits;
-    private final int commentCount;
-    private final LocalDateTime createdAt;
-    private final String writerNickname;
+    private Long id;
+    private String title;
+    private String content;
+    private LocalDateTime updatedAt;
+    private Long userId;
+    private String nickname;
+    private int viewCount;
     private final List<CommentResponse> comments;
 
-    public PostDetailResponse(Post post, String writerNickname, List<CommentResponse> comments, int totalCommentCount) {
-        this.id = post.getId();
-        this.title = post.getTitle();
-        this.content = post.getContent();
-        this.likeCount = post.getLikedUserIds().size();
-        this.hits = post.getHits();
-        this.commentCount = totalCommentCount;
-        this.createdAt = post.getCreatedAt();
-        this.writerNickname = writerNickname;
+    public PostDetailResponse(Long postId, String title, String content, LocalDateTime updatedAt, Long userId ,String nickname,
+                                 int viewCount, List<CommentResponse> comments) {
+        this.id = postId;
+        this.title = title;
+        this.content = content;
+        this.updatedAt = updatedAt;
+        this.userId = userId;
+        this.nickname = nickname;
+        this.viewCount = viewCount;
         this.comments = comments;
     }
 }

@@ -7,21 +7,23 @@ import java.time.LocalDateTime;
 
 @Getter
 public class PostSliceResponse {
-    private final Long id;
-    private final String title;
-    private final int likeCount;
-    private final int commentCount;
-    private final int hits;
-    private final LocalDateTime createdAt;
-    private final String writerNickname;
+    private Long id;
+    private String title;
+    private int likeCount;
+    private int commentCount;
+    private int viewCount;
+    private LocalDateTime updatedAt;
+    private Long userId;
+    private String nickname;
 
-    public PostSliceResponse(Post post, String writerNickname, int commentCount, int likeCount) {
+    public PostSliceResponse(Post post, int likeCount, int commentCount, Long userId, String nickname) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.likeCount = likeCount;
         this.commentCount = commentCount;
-        this.hits = post.getViewCount();
-        this.createdAt = post.getCreatedAt();
-        this.writerNickname = writerNickname;
+        this.viewCount = post.getViewCount();
+        this.updatedAt = post.getUpdatedAt();
+        this.userId = userId;
+        this.nickname = nickname;
     }
 }

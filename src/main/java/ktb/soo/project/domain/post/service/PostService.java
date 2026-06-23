@@ -1,6 +1,7 @@
 package ktb.soo.project.domain.post.service;
 
 import ktb.soo.project.domain.comment.dto.CommentResponse;
+import ktb.soo.project.domain.comment.entity.Comment;
 import ktb.soo.project.domain.comment.repository.CommentRepository;
 import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
@@ -19,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -151,53 +152,46 @@ public class PostService {
         List<Post> posts = postRepository.findAllPublishedPostsWithUser();
         return posts.stream()
                 .map(post -> {
+                    Long userId = (post.getUser() != null) ? post.getUser().getId() : null;
                     String nickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
 
                     int likeCount = postLikeRepository.countByPostId(post.getId());
                     int commentCount = commentRepository.findByPostId(post.getId()).size();
 
-                    return new PostSliceResponse(post, nickname, commentCount, likeCount);
+                    return new PostSliceResponse(post, likeCount, commentCount, userId, nickname);
                 })
                 .toList();
     }
-//
-//    public PostDetailResponse getPostDetail(Long postId) {
-//        Post post = postRepository.findById(postId)
-//                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
-//
-//        // 조회수 1 증가
-//        post.incrementHits();
-//        postRepository.save(post);
-//
-//        String postWriterNickname = userRepository.findById(post.getUserId())
-//                .map(user -> user.getNickname())
-//                .orElse("알 수 없는 사용자");
-//
-//        List<CommentResponse> allComments = commentRepository.findByPostId(postId).stream()
-//                .map(comment -> {
-//                    String commentWriterNickname = userRepository.findById(comment.getUserId())
-//                            .map(user -> user.getNickname())
-//                            .orElse("알 수 없는 사용자");
-//                    return new CommentResponse(comment, commentWriterNickname);
-//                })
-//                .toList();
-//
-//        List<CommentResponse> rootComments = new ArrayList<>();
-//
-//        Map<Long, CommentResponse> commentMap = new HashMap<>();
-//        allComments.forEach(c -> commentMap.put(c.getId(), c));
-//
-//        for (CommentResponse comment : allComments) {
-//            if (comment.getParentId() == null) {
-//                rootComments.add(comment);
-//            } else {
-//                CommentResponse parentComment = commentMap.get(comment.getParentId());
-//                if (parentComment != null) {
-//                    parentComment.getReplies().add(comment);
-//                }
-//            }
-//        }
-//
-//        return new PostDetailResponse(post, postWriterNickname, rootComments, allComments.size());
-//    }
+
+    public PostDetailResponse getPostDetail(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
+
+
+        Long postWriterId = (post.getUser() != null) ? post.getUser().getId() : null;
+        String postWriterNickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
+
+        // 원댓글 + 원댓글 작성자 페치 조인 조회
+        List<Comment> rootComments = commentRepository.findRootCommentsWithUserByPostId(postId);
+
+        List<CommentResponse> commentDtos = rootComments.stream()
+                .map(comment -> {
+                    List<CommentResponse> childrenDtos = comment.getChildren().stream()
+                            .map(child ->{
+                                Long childWriterId = (child.getUser() != null) ? child.getUser().getId() : null;
+                                String childNickname = (child.getUser() != null) ? child.getUser().getNickname() : "알 수 없는 사용자";
+                                Long childCommentId = (child.getDeletedAt() == null) ? child.getId() : null;
+                                return new CommentResponse(childCommentId, child.getContent(), child.getUpdatedAt(), childWriterId, childNickname, null);
+                            })
+                            .collect(Collectors.toList());
+                    Long rootWriterId = (comment.getUser() != null) ? comment.getUser().getId() : null;
+                    String rootNickname = (comment.getUser() != null) ? comment.getUser().getNickname() : "알 수 없는 사용자";
+                    Long rootCommentId = (comment.getDeletedAt() == null) ? comment.getId() : null;
+                    return new CommentResponse(rootCommentId, comment.getContent(), comment.getUpdatedAt(), rootWriterId, rootNickname, childrenDtos);
+                })
+                .collect(Collectors.toList());
+
+        return new PostDetailResponse(post.getId(), post.getTitle(), post.getContent(), post.getUpdatedAt(), postWriterId, postWriterNickname, post.getViewCount(), commentDtos);
+
+    }
 }

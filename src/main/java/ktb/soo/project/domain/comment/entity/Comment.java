@@ -6,9 +6,14 @@ import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.global.common.BaseEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
+@BatchSize(size = 100)
 @Table(name = "comments")
 @NoArgsConstructor
 @Getter
@@ -34,6 +39,10 @@ public class Comment extends BaseEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "parent")
+    private List<Comment> children = new ArrayList<>();
 
     public Comment(Post post, User user, Comment parent, String content) {
         this.post = post;
