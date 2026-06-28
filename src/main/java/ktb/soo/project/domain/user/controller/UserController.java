@@ -3,9 +3,11 @@ package ktb.soo.project.domain.user.controller;
 
 import jakarta.validation.Valid;
 import ktb.soo.project.domain.user.dto.PasswordUpdateRequest;
+import ktb.soo.project.domain.user.dto.UserResponse;
 import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.service.UserService;
 import ktb.soo.project.global.annotation.LoginUser;
+import ktb.soo.project.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getMe(@LoginUser Long userId) {
+        UserResponse response = userService.getUserProfile(userId);
+        return ResponseEntity.ok(ApiResponse.of("USER_FETCH_SUCCESS", response));
+    }
 
     @PatchMapping("/me")
     public ResponseEntity<Void> updateMe(

@@ -1,6 +1,7 @@
 package ktb.soo.project.domain.user.service;
 
 import ktb.soo.project.domain.user.dto.PasswordUpdateRequest;
+import ktb.soo.project.domain.user.dto.UserResponse;
 import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
@@ -37,5 +38,10 @@ public class UserService {
     }
 
 
+    public UserResponse getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
 
+        return new UserResponse(user.getEmail(), user.getNickname());
+    }
 }
