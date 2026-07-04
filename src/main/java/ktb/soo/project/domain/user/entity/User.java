@@ -27,6 +27,10 @@ public class User extends BaseEntity {
 
     private String profileImage;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -35,11 +39,8 @@ public class User extends BaseEntity {
         this.password = password;
         this.nickname = nickname;
         this.profileImage = null;
+        this.role = Role.USER; // 기본 권한은 일반 사용자로 설정
         this.deletedAt = null;
-    }
-
-    public void setId(Long id){
-        this.id = id;
     }
 
     public void updateNickname(String nickname){
