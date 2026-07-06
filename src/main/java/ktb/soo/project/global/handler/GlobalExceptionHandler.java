@@ -6,6 +6,7 @@ import ktb.soo.project.global.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,6 +30,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(exception.getStatus())
                 .body(ApiResponse.onFailure(exception.getCode(), message));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.onFailure("INVALID_LOGIN", "이메일 또는 비밀번호가 올바르지 않습니다."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

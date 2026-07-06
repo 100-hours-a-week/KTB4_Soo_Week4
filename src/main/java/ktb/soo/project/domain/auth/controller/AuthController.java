@@ -1,12 +1,10 @@
 package ktb.soo.project.domain.auth.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import ktb.soo.project.domain.auth.dto.TokenResponse;
 import ktb.soo.project.domain.auth.service.AuthService;
 import ktb.soo.project.domain.user.dto.LoginRequest;
 import ktb.soo.project.domain.user.dto.SignUpRequest;
-import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,15 +31,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Void>> login(
-            @RequestBody @Valid LoginRequest request,
-            HttpServletRequest servletRequest) { // 세션을 쓰기 위해 서블릿 리퀘스트를 주입받음
+    public ResponseEntity<ApiResponse<TokenResponse>> login(
+            @RequestBody @Valid LoginRequest request
+            ) {
 
-        User loginUser = authService.login(request);
+        TokenResponse tokenResponse = authService.login(request);
 
-        HttpSession session = servletRequest.getSession(true);
-        session.setAttribute("LOGIN_USER", loginUser.getId());
-
-        return ResponseEntity.ok(ApiResponse.of("LOGIN_SUCCESS", null));
+        return ResponseEntity.ok(ApiResponse.of("LOGIN_SUCCESS", tokenResponse));
     }
 }
