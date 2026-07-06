@@ -4,11 +4,12 @@ import jakarta.validation.Valid;
 import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.Post;
 import ktb.soo.project.domain.post.service.PostService;
-import ktb.soo.project.global.annotation.LoginUser;
 import ktb.soo.project.global.response.ApiResponse;
+import ktb.soo.project.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,9 +22,10 @@ public class PostController {
 
     @PostMapping("/draft")
     public ResponseEntity<ApiResponse<Long>> createDraft(
-            @LoginUser Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody DraftCreateRequest request) {
 
+        Long userId = userDetails.getUser().getId();
         Long draftId = postService.createDraft(userId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -32,46 +34,52 @@ public class PostController {
 
     @PutMapping("/draft/{draftId}")
     public ResponseEntity<ApiResponse<Long>> updateDraft(
-            @LoginUser Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long draftId,
             @RequestBody DraftUpdateRequest request) {
 
+        Long userId = userDetails.getUser().getId();
         Long updateDraftId =  postService.updateDraft(userId, draftId, request);
         return ResponseEntity.ok(ApiResponse.of("DRAFT_UPDATE_SUCCESS", updateDraftId));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createPost(
-            @LoginUser Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid PostCreateRequest request) {
 
+        Long userId = userDetails.getUser().getId();
         Long postId = postService.createPost(userId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.of("POST_CREATE_SUCCESS", postId));
     }
 
-    @GetMapping("/drafts")
-    public ResponseEntity<ApiResponse<List<Post>>> getMyDrafts(@LoginUser Long userId) {
-        List<Post> drafts = postService.getMyDrafts(userId);
-        return ResponseEntity.ok(ApiResponse.of("DRAFT_FETCH_SUCCESS", drafts));
-    }
+//    @GetMapping("/drafts")
+//    public ResponseEntity<ApiResponse<List<Post>>> getMyDrafts(
+//            @AuthenticationPrincipal CustomUserDetails userDetails) {
+//        Long userId = userDetails.getUser().getId();
+//        List<Post> drafts = postService.getMyDrafts(userId);
+//        return ResponseEntity.ok(ApiResponse.of("DRAFT_FETCH_SUCCESS", drafts));
+//    }
 
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<Long>> updatePost(
-            @LoginUser Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long postId,
             @RequestBody @Valid PostUpdateRequest request) {
 
+        Long userId = userDetails.getUser().getId();
         Long updatedPostId = postService.updatePost(userId, postId, request);
         return ResponseEntity.ok(ApiResponse.of("POST_UPDATE_SUCCESS", updatedPostId));
     }
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
-            @LoginUser Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long postId) {
 
+        Long userId = userDetails.getUser().getId();
         postService.deletePost(userId, postId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
@@ -80,9 +88,10 @@ public class PostController {
 
     @PostMapping("/{postId}/like")
     public ResponseEntity<Void> togglePostLike(
-            @LoginUser Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long postId) {
 
+        Long userId = userDetails.getUser().getId();
         postService.togglePostLike(userId, postId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
