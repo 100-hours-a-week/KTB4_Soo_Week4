@@ -2,7 +2,7 @@ package ktb.soo.project.global.security.token;
 
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
-import ktb.soo.project.global.security.CustomUserDetails;
+import ktb.soo.project.global.security.principal.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

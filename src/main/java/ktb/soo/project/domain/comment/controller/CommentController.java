@@ -5,7 +5,7 @@ import ktb.soo.project.domain.comment.dto.CommentCreateRequest;
 import ktb.soo.project.domain.comment.dto.CommentUpdateRequest;
 import ktb.soo.project.domain.comment.service.CommentService;
 import ktb.soo.project.global.response.ApiResponse;
-import ktb.soo.project.global.security.CustomUserDetails;
+import ktb.soo.project.global.security.principal.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

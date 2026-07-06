@@ -1,6 +1,6 @@
 package ktb.soo.project.global.config;
 
-import ktb.soo.project.global.security.JwtTokenProvider;
+import ktb.soo.project.global.security.provider.JwtTokenProvider;
 import ktb.soo.project.global.security.filter.JwtAuthenticationFilter;
 import ktb.soo.project.global.security.handler.JwtAccessDeniedHandler;
 import ktb.soo.project.global.security.handler.JwtAuthenticationEntryPoint;

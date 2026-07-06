@@ -7,7 +7,7 @@ import ktb.soo.project.domain.user.dto.UserResponse;
 import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.service.UserService;
 import ktb.soo.project.global.response.ApiResponse;
-import ktb.soo.project.global.security.CustomUserDetails;
+import ktb.soo.project.global.security.principal.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

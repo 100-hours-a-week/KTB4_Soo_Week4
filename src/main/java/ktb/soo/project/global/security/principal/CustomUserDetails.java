@@ -1,4 +1,4 @@
-package ktb.soo.project.global.security;
+package ktb.soo.project.global.security.principal;
 
 import ktb.soo.project.domain.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;

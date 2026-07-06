@@ -1,4 +1,4 @@
-package ktb.soo.project.global.security;
+package ktb.soo.project.global.security.provider;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
