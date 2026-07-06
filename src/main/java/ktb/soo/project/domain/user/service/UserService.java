@@ -24,7 +24,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
 
-        if (userRepository.existsByNickname(request.getNewNickname())) {
+        if (userRepository.existsByNicknameAndIdNot(request.getNewNickname(), userId)) {
             throw new BusinessException("DUPLICATE_NICKNAME", HttpStatus.CONFLICT, "이미 다른 사용자가 사용 중인 닉네임입니다.");
         }
 
