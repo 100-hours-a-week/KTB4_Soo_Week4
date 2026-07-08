@@ -9,6 +9,7 @@ import ktb.soo.project.domain.post.entity.PostDraft;
 import ktb.soo.project.domain.post.entity.PostHistory;
 import ktb.soo.project.domain.post.entity.PostLike;
 import ktb.soo.project.domain.post.repository.PostDraftRepository;
+import ktb.soo.project.domain.post.repository.PostCountProjection;
 import ktb.soo.project.domain.post.repository.PostHistoryRepository;
 import ktb.soo.project.domain.post.repository.PostLikeRepository;
 import ktb.soo.project.domain.post.repository.PostRepository;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -156,8 +158,10 @@ public class PostService {
             postIds.add(post.getId());
         }
 
-        Map<Long, Long> likeCountMap = postLikeRepository.countGroupByUserPostIds(postIds);
-        Map<Long, Long> commentCountMap = commentRepository.countGroupByPostIds(postIds);
+        Map<Long, Long> likeCountMap = postLikeRepository.countGroupByUserPostIds(postIds).stream()
+                .collect(Collectors.toMap(PostCountProjection::getPostId, PostCountProjection::getCount));
+        Map<Long, Long> commentCountMap = commentRepository.countGroupByPostIds(postIds).stream()
+                .collect(Collectors.toMap(PostCountProjection::getPostId, PostCountProjection::getCount));
 
         List<PostSliceResponse> responses = new ArrayList<>();
         for (Post post : posts) {
