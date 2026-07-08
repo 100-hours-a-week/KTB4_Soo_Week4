@@ -184,30 +184,72 @@ public class PostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
 
+        // 게시글 작성자 검증
         Long postWriterId = (post.getUser() != null) ? post.getUser().getId() : null;
         String postWriterNickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
 
         // 원댓글 + 원댓글 작성자 페치 조인 조회
         List<Comment> rootComments = commentRepository.findRootCommentsWithUserByPostId(postId);
 
-        List<CommentResponse> commentDtos = rootComments.stream()
-                .map(comment -> {
-                    List<CommentResponse> childrenDtos = comment.getChildren().stream()
-                            .map(child ->{
-                                Long childWriterId = (child.getUser() != null) ? child.getUser().getId() : null;
-                                String childNickname = (child.getUser() != null) ? child.getUser().getNickname() : "알 수 없는 사용자";
-                                Long childCommentId = (child.getDeletedAt() == null) ? child.getId() : null;
-                                return new CommentResponse(childCommentId, child.getContent(), child.getUpdatedAt(), childWriterId, childNickname, null);
-                            })
-                            .collect(Collectors.toList());
-                    Long rootWriterId = (comment.getUser() != null) ? comment.getUser().getId() : null;
-                    String rootNickname = (comment.getUser() != null) ? comment.getUser().getNickname() : "알 수 없는 사용자";
-                    Long rootCommentId = (comment.getDeletedAt() == null) ? comment.getId() : null;
-                    return new CommentResponse(rootCommentId, comment.getContent(), comment.getUpdatedAt(), rootWriterId, rootNickname, childrenDtos);
-                })
-                .collect(Collectors.toList());
+        List<CommentResponse> commentDtos = new ArrayList<>();
 
-        return new PostDetailResponse(post.getId(), post.getTitle(), post.getContent(), post.getUpdatedAt(), postWriterId, postWriterNickname, post.getViewCount(), commentDtos);
+        // 원댓글 리스트 루프
+        for (Comment comment : rootComments) {
 
+            List<CommentResponse> childrenDtos = new ArrayList<>();
+
+            // 대댓글 루프
+            for (Comment child : comment.getChildren()) {
+
+                // 대댓글 작성자 검증
+                Long childWriterId = (child.getUser() != null) ? child.getUser().getId() : null;
+                String childNickname = (child.getUser() != null) ? child.getUser().getNickname() : "알 수 없는 사용자";
+
+                Long childCommentId = (child.getDeletedAt() == null) ? child.getId() : null;
+
+                CommentResponse childDto = new CommentResponse(
+                        childCommentId,
+                        child.getContent(),
+                        child.getUpdatedAt(),
+                        childWriterId,
+                        childNickname,
+                        null
+                );
+
+                childrenDtos.add(childDto);
+            }
+
+            // 원댓글 작성자 검증
+            Long rootWriterId = (comment.getUser() != null) ? comment.getUser().getId() : null;
+            String rootNickname = (comment.getUser() != null) ? comment.getUser().getNickname() : "알 수 없는 사용자";
+
+            // 삭제 여부에 따른 ID 처리
+            Long rootCommentId = (comment.getDeletedAt() == null) ? comment.getId() : null;
+
+            // 원댓글 DTO 생성
+            CommentResponse rootDto = new CommentResponse(
+                    rootCommentId,
+                    comment.getContent(),
+                    comment.getUpdatedAt(),
+                    rootWriterId,
+                    rootNickname,
+                    childrenDtos
+            );
+
+            commentDtos.add(rootDto);
+        }
+
+        // 4. 최종 게시글 상세 응답 DTO 생성 및 반환
+        return new PostDetailResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getUpdatedAt(),
+                postWriterId,
+                postWriterNickname,
+                post.getViewCount(),
+                commentDtos
+        );
     }
+
 }
