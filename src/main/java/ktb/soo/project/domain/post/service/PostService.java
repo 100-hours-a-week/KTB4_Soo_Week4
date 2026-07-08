@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -93,9 +92,6 @@ public class PostService {
         }
     }
 
-//    public List<Post> getMyDrafts(Long userId) {
-//        return postRepository.findDraftsByUserId(userId);
-//    }
 
     @Transactional
     public Long updatePost(Long userId, Long postId, PostUpdateRequest request) {

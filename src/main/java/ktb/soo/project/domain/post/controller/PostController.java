@@ -54,14 +54,6 @@ public class PostController {
                 .body(ApiResponse.of("POST_CREATE_SUCCESS", postId));
     }
 
-//    @GetMapping("/drafts")
-//    public ResponseEntity<ApiResponse<List<Post>>> getMyDrafts(
-//            @AuthenticationPrincipal CustomUserDetails userDetails) {
-//        Long userId = userDetails.getUser().getId();
-//        List<Post> drafts = postService.getMyDrafts(userId);
-//        return ResponseEntity.ok(ApiResponse.of("DRAFT_FETCH_SUCCESS", drafts));
-//    }
-
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<Long>> updatePost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
