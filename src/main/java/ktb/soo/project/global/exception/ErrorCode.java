@@ -1,4 +1,4 @@
-가package ktb.soo.project.global.exception;
+package ktb.soo.project.global.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
