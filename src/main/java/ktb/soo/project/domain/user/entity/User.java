@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import ktb.soo.project.global.common.BaseEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Table(name = "users")
 @NoArgsConstructor
+@BatchSize(size = 100)
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
