@@ -15,7 +15,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostId(Long postId);
 
     @Query("select c from Comment c " +
-            "join fetch c.user " +
+            "left join fetch c.user " +
             "where c.post.id = :postId and c.parent is null")
     List<Comment> findRootCommentsWithUserByPostId(@Param("postId") Long postId);
 
