@@ -150,17 +150,33 @@ public class PostService {
 
     public List<PostSliceResponse> getAllPublishedPosts() {
         List<Post> posts = postRepository.findAllPublishedPostsWithUser();
-        return posts.stream()
-                .map(post -> {
-                    Long userId = (post.getUser() != null) ? post.getUser().getId() : null;
-                    String nickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
 
-                    int likeCount = postLikeRepository.countByPostId(post.getId());
-                    int commentCount = commentRepository.findByPostId(post.getId()).size();
+        if(posts.isEmpty()){
+            return Collections.emptyList();
+        }
 
-                    return new PostSliceResponse(post, likeCount, commentCount, userId, nickname);
-                })
-                .toList();
+        List<Long> postIds = new ArrayList<>();
+        for (Post post : posts) {
+            postIds.add(post.getId());
+        }
+
+        Map<Long, Long> likeCountMap = postLikeRepository.countGroupByUserPostIds(postIds);
+        Map<Long, Long> commentCountMap = commentRepository.countGroupByPostIds(postIds);
+
+        List<PostSliceResponse> responses = new ArrayList<>();
+        for (Post post : posts) {
+            Long userId = (post.getUser() != null) ? post.getUser().getId() : null;
+            String nickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
+
+            int likeCount = likeCountMap.getOrDefault(post.getId(), 0L).intValue();
+            int commentCount = commentCountMap.getOrDefault(post.getId(), 0L).intValue();
+
+            PostSliceResponse responseDto = new PostSliceResponse(post, likeCount, commentCount, userId, nickname);
+
+            responses.add(responseDto);
+        }
+
+        return responses;
     }
 
     public PostDetailResponse getPostDetail(Long postId) {

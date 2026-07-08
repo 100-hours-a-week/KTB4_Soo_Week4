@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             "join fetch c.user " +
             "where c.post.id = :postId and c.parent is null")
     List<Comment> findRootCommentsWithUserByPostId(@Param("postId") Long postId);
+
+    @Query("select c.post.id, count(c) from Comment c " +
+            "where c.post.id in :postIds and c.deletedAt is null " +
+            "group by c.post.id")
+    Map<Long, Long> countGroupByPostIds(@Param("postIds") List<Long> postIds);
 }
