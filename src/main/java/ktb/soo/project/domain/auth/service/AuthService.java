@@ -6,10 +6,10 @@ import ktb.soo.project.domain.user.dto.SignUpRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
+import ktb.soo.project.global.exception.ErrorCode;
 import ktb.soo.project.global.security.principal.CustomUserDetails;
 import ktb.soo.project.global.security.provider.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,11 +30,11 @@ public class AuthService {
     public void signUp(SignUpRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("DUPLICATE_EMAIL", HttpStatus.CONFLICT, "이미 사용 중인 이메일 주소입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         if (userRepository.existsByNickname(request.getNickname())) {
-            throw new BusinessException("DUPLICATE_NICKNAME", HttpStatus.CONFLICT, "이미 존재하는 닉네임입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());

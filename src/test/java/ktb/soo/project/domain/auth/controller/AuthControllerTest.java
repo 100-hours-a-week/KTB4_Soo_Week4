@@ -4,6 +4,7 @@ package ktb.soo.project.domain.auth.controller;
 import ktb.soo.project.domain.auth.service.AuthService;
 import ktb.soo.project.domain.user.dto.SignUpRequest;
 import ktb.soo.project.global.exception.BusinessException;
+import ktb.soo.project.global.exception.ErrorCode;
 import ktb.soo.project.global.security.handler.JwtAccessDeniedHandler;
 import ktb.soo.project.global.security.handler.JwtAuthenticationEntryPoint;
 import ktb.soo.project.global.security.provider.JwtTokenProvider;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -95,11 +95,8 @@ class AuthControllerTest {
         // given
         SignUpRequest request = new SignUpRequest("duplicate@gmail.com", "Password123!", "soo");
 
-        willThrow(new BusinessException(
-                "DUPLICATE_EMAIL",
-                HttpStatus.CONFLICT,
-                "이미 사용 중인 이메일입니다."
-        )).given(authService).signUp(any(SignUpRequest.class));
+        willThrow(new BusinessException(ErrorCode.DUPLICATE_EMAIL))
+                .given(authService).signUp(any(SignUpRequest.class));
 
         // when & then
         mockMvc.perform(post("/api/v1/auth/signup")
@@ -107,6 +104,6 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("DUPLICATE_EMAIL"));
+                .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_EMAIL.name()));
     }
 }

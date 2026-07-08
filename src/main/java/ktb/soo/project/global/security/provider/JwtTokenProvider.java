@@ -6,6 +6,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import ktb.soo.project.global.exception.ErrorCode;
 import ktb.soo.project.global.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -58,9 +59,9 @@ public class JwtTokenProvider {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
         } catch (SecurityException | UnsupportedJwtException | MalformedJwtException e) {
-            throw new UnauthorizedException("INVALID_TOKEN", "유효하지 않은 토큰입니다.");
+            throw new UnauthorizedException(ErrorCode.INVALID_TOKEN);
         } catch (ExpiredJwtException e) {
-            throw new UnauthorizedException("EXPIRED_TOKEN", "만료된 토큰입니다.");
+            throw new UnauthorizedException(ErrorCode.EXPIRED_TOKEN);
         }
     }
 
@@ -76,7 +77,7 @@ public class JwtTokenProvider {
             } catch (ExpiredJwtException e) {
                 return e.getClaims().getSubject();
             } catch (Exception e) {
-                throw new UnauthorizedException("INVALID_TOKEN", "유효하지 않은 토큰입니다.");
+                throw new UnauthorizedException(ErrorCode.INVALID_TOKEN);
             }
     }
 

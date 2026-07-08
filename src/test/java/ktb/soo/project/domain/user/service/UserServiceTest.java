@@ -6,6 +6,7 @@ import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
+import ktb.soo.project.global.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ class UserServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () ->
                 userService.getUserProfile(userId)
         );
-        assertEquals("USER_NOT_FOUND", exception.getCode());
+        assertEquals(ErrorCode.USER_NOT_FOUND.name(), exception.getCode());
     }
 
     // ==========================================
@@ -99,7 +100,7 @@ class UserServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () ->
                 userService.updateNickname(userId, request)
         );
-        assertEquals("USER_NOT_FOUND", exception.getCode());
+        assertEquals(ErrorCode.USER_NOT_FOUND.name(), exception.getCode());
     }
 
     @Test
@@ -116,7 +117,7 @@ class UserServiceTest {
                 userService.updateNickname(userId, request)
         );
 
-        assertEquals("DUPLICATE_NICKNAME", exception.getCode());
+        assertEquals(ErrorCode.DUPLICATE_NICKNAME.name(), exception.getCode());
     }
 
     // ==========================================
@@ -149,7 +150,7 @@ class UserServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () ->
                 userService.updatePassword(userId, request)
         );
-        assertEquals("USER_NOT_FOUND", exception.getCode());
+        assertEquals(ErrorCode.USER_NOT_FOUND.name(), exception.getCode());
     }
 
     @Test
@@ -166,7 +167,7 @@ class UserServiceTest {
                 userService.updatePassword(userId, request)
         );
 
-        assertEquals("INVALID_CURRENT_PASSWORD", exception.getCode());
+        assertEquals(ErrorCode.INVALID_CURRENT_PASSWORD.name(), exception.getCode());
     }
 
     @Test
@@ -183,7 +184,7 @@ class UserServiceTest {
                 userService.updatePassword(userId, request)
         );
 
-        assertEquals("PASSWORD_CONFIRM_MISMATCH", exception.getCode());
+        assertEquals(ErrorCode.PASSWORD_CONFIRM_MISMATCH.name(), exception.getCode());
     }
 
 }

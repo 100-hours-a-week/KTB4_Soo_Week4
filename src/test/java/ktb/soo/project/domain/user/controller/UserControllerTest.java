@@ -6,6 +6,7 @@ import ktb.soo.project.domain.user.dto.UserUpdateRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.service.UserService;
 import ktb.soo.project.global.exception.BusinessException;
+import ktb.soo.project.global.exception.ErrorCode;
 import ktb.soo.project.global.security.handler.JwtAccessDeniedHandler;
 import ktb.soo.project.global.security.handler.JwtAuthenticationEntryPoint;
 import ktb.soo.project.global.security.principal.CustomUserDetails;
@@ -18,7 +19,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -124,16 +124,16 @@ class UserControllerTest {
         UserUpdateRequest request = new UserUpdateRequest("중복된닉네임");
 
         // 서비스에서 BusinessException(DUPLICATE_NICKNAME)을 던지도록 설정
-        willThrow(new BusinessException("DUPLICATE_NICKNAME", HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."))
+        willThrow(new BusinessException(ErrorCode.DUPLICATE_NICKNAME))
                 .given(userService).updateNickname(any(), any(UserUpdateRequest.class));
 
         // when & then
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .with(csrf()))
+                .with(csrf()))
                 .andExpect(status().isConflict()) // 409 검증
-                .andExpect(jsonPath("$.code").value("DUPLICATE_NICKNAME"));
+                .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_NICKNAME.name()));
     }
 
     // ==========================================
@@ -178,16 +178,16 @@ class UserControllerTest {
         // given
         PasswordUpdateRequest request = new PasswordUpdateRequest("wrongPw", "newPw123!", "newPw123!");
 
-        willThrow(new BusinessException("INVALID_CURRENT_PASSWORD", HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."))
+        willThrow(new BusinessException(ErrorCode.INVALID_CURRENT_PASSWORD))
                 .given(userService).updatePassword(any(), any(PasswordUpdateRequest.class));
 
         // when & then
         mockMvc.perform(patch("/api/v1/users/me/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .with(csrf()))
+                .with(csrf()))
                 .andExpect(status().isUnauthorized()) // 401 검증
-                .andExpect(jsonPath("$.code").value("INVALID_CURRENT_PASSWORD"));
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CURRENT_PASSWORD.name()));
     }
 
     @TestConfiguration

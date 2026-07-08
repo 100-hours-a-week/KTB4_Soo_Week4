@@ -4,6 +4,7 @@ import ktb.soo.project.domain.user.dto.SignUpRequest;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
+import ktb.soo.project.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +59,7 @@ class AuthServiceTest {
         );
 
         // then
-        assertEquals("DUPLICATE_EMAIL", exception.getCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.name(), exception.getCode());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -77,7 +78,7 @@ class AuthServiceTest {
         );
 
         // then
-        assertEquals("DUPLICATE_NICKNAME", exception.getCode());
+        assertEquals(ErrorCode.DUPLICATE_NICKNAME.name(), exception.getCode());
         verify(userRepository, never()).save(any(User.class));
     }
 

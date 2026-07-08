@@ -15,8 +15,8 @@ import ktb.soo.project.domain.post.repository.PostRepository;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
+import ktb.soo.project.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +39,7 @@ public class PostService {
     @Transactional
     public Long createDraft(Long userId, DraftCreateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         PostDraft draftPost = new PostDraft(user, request.getTitle(), request.getContent());
         PostDraft savedPost = postDraftRepository.save(draftPost);
@@ -51,11 +51,11 @@ public class PostService {
     @Transactional
     public Long updateDraft(Long userId, Long draftId, DraftUpdateRequest request) {
         PostDraft postDraft = postDraftRepository.findById(draftId)
-                .orElseThrow(() -> new BusinessException("DRAFT_NOT_FOUND", HttpStatus.NOT_FOUND, "임시저장 글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DRAFT_NOT_FOUND));
 
         // 임시저장한 본인이 맞는지 검증
         if (!postDraft.getUser().getId().equals(userId)) {
-            throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "해당 글에 대한 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_POST_ACCESS);
         }
 
         postDraft.updateDraft(request.getTitle(), request.getContent());
@@ -67,15 +67,15 @@ public class PostService {
     @Transactional
     public Long createPost(Long userId, PostCreateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 임시저장된 글을 바탕으로 최종 등록을 할 경우
         if (request.getDraftId() != null) {
             PostDraft postDraft = postDraftRepository.findById(request.getDraftId())
-                    .orElseThrow(() -> new BusinessException("DRAFT_NOT_FOUND", HttpStatus.NOT_FOUND, "임시저장 글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.DRAFT_NOT_FOUND));
 
             if (!postDraft.getUser().getId().equals(userId)) {
-                throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "해당 글에 대한 권한이 없습니다.");
+                throw new BusinessException(ErrorCode.UNAUTHORIZED_POST_ACCESS);
             }
 
             Post newPost = new Post(user, request.getTitle(), request.getContent(), request.getImage());
@@ -100,10 +100,10 @@ public class PostService {
     @Transactional
     public Long updatePost(Long userId, Long postId, PostUpdateRequest request) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getUser().getId().equals(userId)) {
-            throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "본인이 작성한 글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_POST_ACCESS);
         }
 
         // 현재까지 쌓이 이력 개수 + 1해서 버전을 계산
@@ -119,10 +119,10 @@ public class PostService {
     @Transactional
     public void deletePost(Long userId, Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getUser().getId().equals(userId)) {
-            throw new BusinessException("UNAUTHORIZED_POST_ACCESS", HttpStatus.FORBIDDEN, "본인이 작성한 글만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_POST_ACCESS);
         }
 
         post.softDelete();
@@ -131,10 +131,10 @@ public class PostService {
     @Transactional
     public void togglePostLike(Long userId, Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 
         // 유저가 이미 좋아요 누른 이력이 있는지 확인
@@ -165,7 +165,7 @@ public class PostService {
 
     public PostDetailResponse getPostDetail(Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException("POST_NOT_FOUND", HttpStatus.NOT_FOUND, "해당 게시글이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
 
         Long postWriterId = (post.getUser() != null) ? post.getUser().getId() : null;
