@@ -179,49 +179,55 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        User userProxy = userRepository.getReferenceById(userId);
+        handleViewCount(userId, post);
 
+        return convertToDetailResponse(post);
+    }
+
+    private void handleViewCount(Long userId, Post post) {
+        // 비회원
+        if (userId == null) {
+            post.increaseViewCount();
+            return;
+        }
+
+        // 회원인 경우
+        User userProxy = userRepository.getReferenceById(userId);
         LocalDateTime now = LocalDateTime.now();
-        Optional<PostView> postViewOpt = postViewRepository.findByUserIdAndPostId(userId, postId);
+        Optional<PostView> postViewOpt = postViewRepository.findByUserIdAndPostId(userId, post.getId());
 
         if (postViewOpt.isEmpty()) {
             // 최초 조회
             PostView newView = new PostView(userProxy, post);
             postViewRepository.save(newView);
-
             post.increaseViewCount();
         } else {
             // 다시 조회
             PostView existView = postViewOpt.get();
-            // 기존 조회 시간보다 24시간이 지났는지 검증
             if (existView.getViewedAt().isBefore(now.minusHours(24))) {
                 existView.updateViewedAt();
                 post.increaseViewCount();
             }
         }
+    }
 
-
+    private PostDetailResponse convertToDetailResponse(Post post) {
         // 게시글 작성자 검증
         Long postWriterId = (post.getUser() != null) ? post.getUser().getId() : null;
         String postWriterNickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
 
         // 원댓글 + 원댓글 작성자 페치 조인 조회
-        List<Comment> rootComments = commentRepository.findRootCommentsWithUserByPostId(postId);
-
+        List<Comment> rootComments = commentRepository.findRootCommentsWithUserByPostId(post.getId());
         List<CommentResponse> commentDtos = new ArrayList<>();
 
         // 원댓글 리스트 루프
         for (Comment comment : rootComments) {
-
             List<CommentResponse> childrenDtos = new ArrayList<>();
 
             // 대댓글 루프
             for (Comment child : comment.getChildren()) {
-
-                // 대댓글 작성자 검증
                 Long childWriterId = (child.getUser() != null) ? child.getUser().getId() : null;
                 String childNickname = (child.getUser() != null) ? child.getUser().getNickname() : "알 수 없는 사용자";
-
                 Long childCommentId = (child.getDeletedAt() == null) ? child.getId() : null;
 
                 CommentResponse childDto = new CommentResponse(
@@ -232,18 +238,14 @@ public class PostService {
                         childNickname,
                         null
                 );
-
                 childrenDtos.add(childDto);
             }
 
             // 원댓글 작성자 검증
             Long rootWriterId = (comment.getUser() != null) ? comment.getUser().getId() : null;
             String rootNickname = (comment.getUser() != null) ? comment.getUser().getNickname() : "알 수 없는 사용자";
-
-            // 삭제 여부에 따른 ID 처리
             Long rootCommentId = (comment.getDeletedAt() == null) ? comment.getId() : null;
 
-            // 원댓글 DTO 생성
             CommentResponse rootDto = new CommentResponse(
                     rootCommentId,
                     comment.getContent(),
@@ -252,11 +254,10 @@ public class PostService {
                     rootNickname,
                     childrenDtos
             );
-
             commentDtos.add(rootDto);
         }
 
-        // 최종 게시글 상세 응답 DTO 생성 및 반환
+        // 최종 DTO 반환
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
