@@ -4,15 +4,8 @@ import ktb.soo.project.domain.comment.dto.CommentResponse;
 import ktb.soo.project.domain.comment.entity.Comment;
 import ktb.soo.project.domain.comment.repository.CommentRepository;
 import ktb.soo.project.domain.post.dto.*;
-import ktb.soo.project.domain.post.entity.Post;
-import ktb.soo.project.domain.post.entity.PostDraft;
-import ktb.soo.project.domain.post.entity.PostHistory;
-import ktb.soo.project.domain.post.entity.PostLike;
-import ktb.soo.project.domain.post.repository.PostDraftRepository;
-import ktb.soo.project.domain.post.repository.PostCountProjection;
-import ktb.soo.project.domain.post.repository.PostHistoryRepository;
-import ktb.soo.project.domain.post.repository.PostLikeRepository;
-import ktb.soo.project.domain.post.repository.PostRepository;
+import ktb.soo.project.domain.post.entity.*;
+import ktb.soo.project.domain.post.repository.*;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
@@ -21,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +29,7 @@ public class PostService {
     private final PostDraftRepository postDraftRepository;
     private final PostHistoryRepository postHistoryRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PostViewRepository postViewRepository;
 
     // 최초 임시저장
     @Transactional
@@ -179,9 +174,31 @@ public class PostService {
         return responses;
     }
 
-    public PostDetailResponse getPostDetail(Long postId) {
+    @Transactional
+    public PostDetailResponse getPostDetail(Long userId, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        User userProxy = userRepository.getReferenceById(userId);
+
+        LocalDateTime now = LocalDateTime.now();
+        Optional<PostView> postViewOpt = postViewRepository.findByUserIdAndPostId(userId, postId);
+
+        if (postViewOpt.isEmpty()) {
+            // 최초 조회
+            PostView newView = new PostView(userProxy, post);
+            postViewRepository.save(newView);
+
+            post.increaseViewCount();
+        } else {
+            // 다시 조회
+            PostView existView = postViewOpt.get();
+            // 기존 조회 시간보다 24시간이 지났는지 검증
+            if (existView.getViewedAt().isBefore(now.minusHours(24))) {
+                existView.updateViewedAt();
+                post.increaseViewCount();
+            }
+        }
 
 
         // 게시글 작성자 검증
@@ -239,7 +256,7 @@ public class PostService {
             commentDtos.add(rootDto);
         }
 
-        // 4. 최종 게시글 상세 응답 DTO 생성 및 반환
+        // 최종 게시글 상세 응답 DTO 생성 및 반환
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
