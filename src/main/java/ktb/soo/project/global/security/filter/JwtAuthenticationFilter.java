@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import ktb.soo.project.global.exception.UnauthorizedException;
 import ktb.soo.project.global.security.provider.JwtTokenProvider;
 import ktb.soo.project.global.security.token.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,8 @@ import java.io.IOException;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    public static final String JWT_EXCEPTION_ATTRIBUTE = "jwtException";
+
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
 
@@ -45,10 +48,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (Exception e) {
+            } catch (UnauthorizedException e) {
                 // 토큰 검증 중 예외가 발생하면 시큐리티 컨텍스트를 비워두고 그냥 다음 필터로 넘김
                 // (이후 SecurityConfig 설정에 따라 인가 처리가 차단됨)
                 SecurityContextHolder.clearContext();
+                request.setAttribute(JWT_EXCEPTION_ATTRIBUTE, e.getErrorCode());
             }
         }
 
