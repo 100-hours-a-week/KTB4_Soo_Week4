@@ -8,6 +8,7 @@ import ktb.soo.project.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,9 +41,11 @@ class AuthServiceTest {
         authService.signUp(request);
 
         // then
-       verify(userRepository, times(1)).save(any(User.class));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, times(1)).save(userCaptor.capture());
 
-
+        User savedUser = userCaptor.getValue();
+        assertEquals("encoded_pw", savedUser.getPassword());
     }
 
     @Test
