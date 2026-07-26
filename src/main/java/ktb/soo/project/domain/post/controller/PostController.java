@@ -98,7 +98,7 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                                          @PathVariable Long postId) {
-        Long userId = userDetails.getUser().getId();
+        Long userId = userDetails != null ? userDetails.getUser().getId() : null;
 
         PostDetailResponse response = postService.getPostDetail(userId, postId);
         return ResponseEntity.ok(ApiResponse.of("POST_DETAIL_FETCH_SUCCESS", response));

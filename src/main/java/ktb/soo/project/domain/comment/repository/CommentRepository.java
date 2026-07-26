@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostId(Long postId);
+    int countByPostIdAndDeletedAtIsNull(Long postId);
 
     @Query("select c from Comment c " +
             "left join fetch c.user " +

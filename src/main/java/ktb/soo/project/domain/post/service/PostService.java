@@ -181,7 +181,7 @@ public class PostService {
 
         handleViewCount(userId, post);
 
-        return convertToDetailResponse(post);
+        return convertToDetailResponse(userId, post);
     }
 
     private void handleViewCount(Long userId, Post post) {
@@ -211,10 +211,15 @@ public class PostService {
         }
     }
 
-    private PostDetailResponse convertToDetailResponse(Post post) {
+    private PostDetailResponse convertToDetailResponse(Long currentUserId, Post post) {
         // 게시글 작성자 검증
         Long postWriterId = (post.getUser() != null) ? post.getUser().getId() : null;
         String postWriterNickname = (post.getUser() != null) ? post.getUser().getNickname() : "알 수 없는 사용자";
+        boolean isPostAuthor = Objects.equals(currentUserId, postWriterId) && currentUserId != null;
+        boolean isLiked = currentUserId != null
+                && postLikeRepository.findByUserIdAndPostId(currentUserId, post.getId()).isPresent();
+        int likeCount = postLikeRepository.countByPostId(post.getId());
+        int commentCount = commentRepository.countByPostIdAndDeletedAtIsNull(post.getId());
 
         // 원댓글 + 원댓글 작성자 페치 조인 조회
         List<Comment> rootComments = commentRepository.findRootCommentsWithUserByPostId(post.getId());
@@ -236,6 +241,7 @@ public class PostService {
                         child.getUpdatedAt(),
                         childWriterId,
                         childNickname,
+                        Objects.equals(currentUserId, childWriterId) && currentUserId != null,
                         null
                 );
                 childrenDtos.add(childDto);
@@ -252,6 +258,7 @@ public class PostService {
                     comment.getUpdatedAt(),
                     rootWriterId,
                     rootNickname,
+                    Objects.equals(currentUserId, rootWriterId) && currentUserId != null,
                     childrenDtos
             );
             commentDtos.add(rootDto);
@@ -266,6 +273,10 @@ public class PostService {
                 postWriterId,
                 postWriterNickname,
                 post.getViewCount(),
+                likeCount,
+                commentCount,
+                isPostAuthor,
+                isLiked,
                 commentDtos
         );
     }
