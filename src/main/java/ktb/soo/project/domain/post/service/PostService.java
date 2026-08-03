@@ -1,5 +1,6 @@
 package ktb.soo.project.domain.post.service;
 
+import jakarta.persistence.EntityManager;
 import ktb.soo.project.domain.comment.dto.CommentResponse;
 import ktb.soo.project.domain.comment.entity.Comment;
 import ktb.soo.project.domain.comment.repository.CommentRepository;
@@ -30,6 +31,7 @@ public class PostService {
     private final PostHistoryRepository postHistoryRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostViewRepository postViewRepository;
+    private final EntityManager entityManager;
 
     // 최초 임시저장
     @Transactional
@@ -187,7 +189,7 @@ public class PostService {
     private void handleViewCount(Long userId, Post post) {
         // 비회원
         if (userId == null) {
-            post.increaseViewCount();
+            increaseViewCount(post);
             return;
         }
 
@@ -200,15 +202,22 @@ public class PostService {
             // 최초 조회
             PostView newView = new PostView(userProxy, post);
             postViewRepository.save(newView);
-            post.increaseViewCount();
+            increaseViewCount(post);
         } else {
             // 다시 조회
             PostView existView = postViewOpt.get();
             if (existView.getViewedAt().isBefore(now.minusHours(24))) {
                 existView.updateViewedAt();
-                post.increaseViewCount();
+                increaseViewCount(post);
             }
         }
+    }
+
+    private void increaseViewCount(Post post) {
+        postRepository.increaseViewCount(post.getId());
+
+        // 벌크 UPDATE는 영속성 컨텍스트를 거치지 않으므로 응답에 최신 조회수를 반영한다.
+        entityManager.refresh(post);
     }
 
     private PostDetailResponse convertToDetailResponse(Long currentUserId, Post post) {

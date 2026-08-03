@@ -3,7 +3,9 @@ package ktb.soo.project.domain.post.repository;
 
 import ktb.soo.project.domain.post.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +20,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "AND p.isBlinded = false " +
             "ORDER BY p.createdAt DESC")
     List<Post> findAllPublishedPostsWithUser();
+
+    @Modifying
+    @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :postId")
+    int increaseViewCount(@Param("postId") Long postId);
 }
