@@ -177,34 +177,50 @@ public class PostService {
     }
 
     @Transactional
-    public PostDetailResponse getPostDetail(Long userId, Long postId) {
+    public PostDetailResponse getPostDetail(Long userId, String guestId, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        handleViewCount(userId, post);
+        handleViewCount(userId, guestId, post);
 
         return convertToDetailResponse(userId, post);
     }
 
-    private void handleViewCount(Long userId, Post post) {
+    private void handleViewCount(Long userId, String guestId, Post post) {
         // 비회원
         if (userId == null) {
-            increaseViewCount(post);
-            return;
-        }
+            handleGuestView(guestId, post);
+        } else {
+            // 회원인 경우
+            User userProxy = userRepository.getReferenceById(userId);
+            LocalDateTime now = LocalDateTime.now();
+            Optional<PostView> postViewOpt = postViewRepository.findByUserIdAndPostId(userId, post.getId());
 
-        // 회원인 경우
-        User userProxy = userRepository.getReferenceById(userId);
+            if (postViewOpt.isEmpty()) {
+                // 최초 조회
+                PostView newView = new PostView(userProxy, post);
+                postViewRepository.save(newView);
+                increaseViewCount(post);
+            } else {
+                // 다시 조회
+                PostView existView = postViewOpt.get();
+                if (existView.getViewedAt().isBefore(now.minusHours(24))) {
+                    existView.updateViewedAt();
+                    increaseViewCount(post);
+                }
+            }
+        }
+    }
+
+    private void handleGuestView(String guestId, Post post) {
         LocalDateTime now = LocalDateTime.now();
-        Optional<PostView> postViewOpt = postViewRepository.findByUserIdAndPostId(userId, post.getId());
+        Optional<PostView> postViewOpt = postViewRepository.findByGuestIdAndPostId(guestId, post.getId());
 
         if (postViewOpt.isEmpty()) {
-            // 최초 조회
-            PostView newView = new PostView(userProxy, post);
+            PostView newView = new PostView(guestId, post);
             postViewRepository.save(newView);
             increaseViewCount(post);
         } else {
-            // 다시 조회
             PostView existView = postViewOpt.get();
             if (existView.getViewedAt().isBefore(now.minusHours(24))) {
                 existView.updateViewedAt();

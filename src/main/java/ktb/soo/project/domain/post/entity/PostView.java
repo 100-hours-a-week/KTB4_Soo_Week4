@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(
                         name = "uk_post_view_user_post",
                         columnNames = {"user_id", "post_id"}
+                ),
+                @UniqueConstraint(
+                        name = "uk_post_view_guest_post",
+                        columnNames = {"guest_id", "post_id"}
                 )
         }
 )
@@ -26,8 +30,11 @@ public class PostView extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "guest_id", length = 36)
+    private String guestId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
@@ -38,6 +45,12 @@ public class PostView extends BaseEntity {
 
     public PostView(User user, Post post){
         this.user = user;
+        this.post = post;
+        this.viewedAt = LocalDateTime.now();
+    }
+
+    public PostView(String guestId, Post post) {
+        this.guestId = guestId;
         this.post = post;
         this.viewedAt = LocalDateTime.now();
     }
