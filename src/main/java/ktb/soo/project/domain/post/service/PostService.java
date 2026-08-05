@@ -187,46 +187,47 @@ public class PostService {
     }
 
     private void handleViewCount(Long userId, String guestId, Post post) {
-        // 비회원
-        if (userId == null) {
-            handleGuestView(guestId, post);
-        } else {
-            // 회원인 경우
-            User userProxy = userRepository.getReferenceById(userId);
-            LocalDateTime now = LocalDateTime.now();
-            Optional<PostView> postViewOpt = postViewRepository.findByUserIdAndPostId(userId, post.getId());
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime threshold = now.minusHours(24);
+        boolean viewAcquired;
 
-            if (postViewOpt.isEmpty()) {
-                // 최초 조회
-                PostView newView = new PostView(userProxy, post);
-                postViewRepository.save(newView);
-                increaseViewCount(post);
-            } else {
-                // 다시 조회
-                PostView existView = postViewOpt.get();
-                if (existView.getViewedAt().isBefore(now.minusHours(24))) {
-                    existView.updateViewedAt();
-                    increaseViewCount(post);
-                }
-            }
+        if (userId == null) {
+            // 비회원이 조회권 획득 시도
+            viewAcquired = acquireGuestView(guestId, post.getId(), threshold, now);
+        } else {
+            // 회원이 조회권 획득 시도
+            viewAcquired = acquireMemberView(userId, post.getId(), threshold, now);
+        }
+
+        if (viewAcquired) {
+            // 획득한 요청만 실제 조회수 증가
+            increaseViewCount(post);
         }
     }
 
-    private void handleGuestView(String guestId, Post post) {
-        LocalDateTime now = LocalDateTime.now();
-        Optional<PostView> postViewOpt = postViewRepository.findByGuestIdAndPostId(guestId, post.getId());
-
-        if (postViewOpt.isEmpty()) {
-            PostView newView = new PostView(guestId, post);
-            postViewRepository.save(newView);
-            increaseViewCount(post);
-        } else {
-            PostView existView = postViewOpt.get();
-            if (existView.getViewedAt().isBefore(now.minusHours(24))) {
-                existView.updateViewedAt();
-                increaseViewCount(post);
-            }
+    private boolean acquireMemberView(Long userId, Long postId,
+                                      LocalDateTime threshold, LocalDateTime now) {
+        int updated = postViewRepository.updateMemberViewIfExpired(userId, postId, threshold, now);
+        if (updated == 1) {
+            return true;
         }
+
+        return postViewRepository.insertMemberViewIfAbsent(userId, postId, now) == 1;
+    }
+
+    private boolean acquireGuestView(String guestId, Long postId,
+                                     LocalDateTime threshold, LocalDateTime now) {
+        // 예전에 봤던 기록이 있고 24시간이 지났다면 갱신
+        int updated = postViewRepository.updateGuestViewIfExpired(guestId, postId, threshold, now);
+        if (updated == 1) {
+            return true;
+        }
+
+        // 갱신 못했다면
+        // 아예 처음 보는 사람일 수도 있으니 INSERT시도
+        // 정말 처음이면 성공 = true
+        // 이미 기록 있으면 UNIQUE 충돌 = false
+        return postViewRepository.insertGuestViewIfAbsent(guestId, postId, now) == 1;
     }
 
     private void increaseViewCount(Post post) {

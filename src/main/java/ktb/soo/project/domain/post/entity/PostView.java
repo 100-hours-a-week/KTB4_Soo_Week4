@@ -43,20 +43,4 @@ public class PostView extends BaseEntity {
     @Column(name = "viewed_at", nullable = false)
     private LocalDateTime viewedAt;
 
-    public PostView(User user, Post post){
-        this.user = user;
-        this.post = post;
-        this.viewedAt = LocalDateTime.now();
-    }
-
-    public PostView(String guestId, Post post) {
-        this.guestId = guestId;
-        this.post = post;
-        this.viewedAt = LocalDateTime.now();
-    }
-
-    public void updateViewedAt(){
-        this.viewedAt = LocalDateTime.now();
-    }
-
 }
