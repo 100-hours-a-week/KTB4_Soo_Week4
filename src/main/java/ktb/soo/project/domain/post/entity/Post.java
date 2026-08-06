@@ -61,4 +61,8 @@ public class Post extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
 }

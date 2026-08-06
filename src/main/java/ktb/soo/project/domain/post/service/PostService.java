@@ -1,6 +1,5 @@
 package ktb.soo.project.domain.post.service;
 
-import jakarta.persistence.EntityManager;
 import ktb.soo.project.domain.comment.dto.CommentResponse;
 import ktb.soo.project.domain.comment.entity.Comment;
 import ktb.soo.project.domain.comment.repository.CommentRepository;
@@ -31,7 +30,6 @@ public class PostService {
     private final PostHistoryRepository postHistoryRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostViewRepository postViewRepository;
-    private final EntityManager entityManager;
 
     // 최초 임시저장
     @Transactional
@@ -188,53 +186,37 @@ public class PostService {
 
     private void handleViewCount(Long userId, String guestId, Post post) {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime threshold = now.minusHours(24);
-        boolean viewAcquired;
 
         if (userId == null) {
-            // 비회원이 조회권 획득 시도
-            viewAcquired = acquireGuestView(guestId, post.getId(), threshold, now);
+            handleGuestView(guestId, post, now);
         } else {
-            // 회원이 조회권 획득 시도
-            viewAcquired = acquireMemberView(userId, post.getId(), threshold, now);
-        }
-
-        if (viewAcquired) {
-            // 획득한 요청만 실제 조회수 증가
-            increaseViewCount(post);
+            handleMemberView(userId, post, now);
         }
     }
 
-    private boolean acquireMemberView(Long userId, Long postId,
-                                      LocalDateTime threshold, LocalDateTime now) {
-        int updated = postViewRepository.updateMemberViewIfExpired(userId, postId, threshold, now);
-        if (updated == 1) {
-            return true;
-        }
+    private void handleMemberView(Long userId, Post post, LocalDateTime now) {
+        Optional<PostView> postView = postViewRepository.findByUserIdAndPostId(userId, post.getId());
 
-        return postViewRepository.insertMemberViewIfAbsent(userId, postId, now) == 1;
+        if (postView.isEmpty()) {
+            User user = userRepository.getReferenceById(userId);
+            postViewRepository.save(new PostView(user, post));
+            post.increaseViewCount();
+        } else if (postView.get().getViewedAt().isBefore(now.minusHours(24))) {
+            postView.get().updateViewedAt();
+            post.increaseViewCount();
+        }
     }
 
-    private boolean acquireGuestView(String guestId, Long postId,
-                                     LocalDateTime threshold, LocalDateTime now) {
-        // 예전에 봤던 기록이 있고 24시간이 지났다면 갱신
-        int updated = postViewRepository.updateGuestViewIfExpired(guestId, postId, threshold, now);
-        if (updated == 1) {
-            return true;
+    private void handleGuestView(String guestId, Post post, LocalDateTime now) {
+        Optional<PostView> postView = postViewRepository.findByGuestIdAndPostId(guestId, post.getId());
+
+        if (postView.isEmpty()) {
+            postViewRepository.save(new PostView(guestId, post));
+            post.increaseViewCount();
+        } else if (postView.get().getViewedAt().isBefore(now.minusHours(24))) {
+            postView.get().updateViewedAt();
+            post.increaseViewCount();
         }
-
-        // 갱신 못했다면
-        // 아예 처음 보는 사람일 수도 있으니 INSERT시도
-        // 정말 처음이면 성공 = true
-        // 이미 기록 있으면 UNIQUE 충돌 = false
-        return postViewRepository.insertGuestViewIfAbsent(guestId, postId, now) == 1;
-    }
-
-    private void increaseViewCount(Post post) {
-        postRepository.increaseViewCount(post.getId());
-
-        // 벌크 UPDATE는 영속성 컨텍스트를 거치지 않으므로 응답에 최신 조회수를 반영한다.
-        entityManager.refresh(post);
     }
 
     private PostDetailResponse convertToDetailResponse(Long currentUserId, Post post) {
