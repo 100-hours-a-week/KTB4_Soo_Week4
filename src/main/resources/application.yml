@@ -4,6 +4,14 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USERNAME:ktb_app}
     password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 2s
+      timeout: 1s
+      repositories:
+        enabled: false
   jpa:
     defer-datasource-initialization: false
     hibernate:
