@@ -7,6 +7,7 @@ import ktb.soo.project.domain.comment.repository.CommentRepository;
 import ktb.soo.project.domain.post.dto.*;
 import ktb.soo.project.domain.post.entity.*;
 import ktb.soo.project.domain.post.repository.*;
+import ktb.soo.project.domain.post.support.RedisViewTracker;
 import ktb.soo.project.domain.user.entity.User;
 import ktb.soo.project.domain.user.repository.UserRepository;
 import ktb.soo.project.global.exception.BusinessException;
@@ -31,6 +32,7 @@ public class PostService {
     private final PostHistoryRepository postHistoryRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostViewRepository postViewRepository;
+    private final RedisViewTracker redisViewTracker;
     private final EntityManager entityManager;
 
     // 최초 임시저장
@@ -187,21 +189,29 @@ public class PostService {
     }
 
     private void handleViewCount(Long userId, String guestId, Post post) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime threshold = now.minusHours(24);
         boolean viewAcquired;
 
         if (userId == null) {
-            // 비회원이 조회권 획득 시도
-            viewAcquired = acquireGuestView(guestId, post.getId(), threshold, now);
+            viewAcquired = redisViewTracker.acquireGuest(post.getId(), guestId);
         } else {
-            // 회원이 조회권 획득 시도
-            viewAcquired = acquireMemberView(userId, post.getId(), threshold, now);
+            viewAcquired = redisViewTracker.acquireMember(post.getId(), userId);
         }
 
         if (viewAcquired) {
-            // 획득한 요청만 실제 조회수 증가
-            increaseViewCount(post);
+            try {
+                increaseViewCount(post);
+            } catch (RuntimeException e) {
+                releaseView(userId, guestId, post.getId());
+                throw e;
+            }
+        }
+    }
+
+    private void releaseView(Long userId, String guestId, Long postId) {
+        if (userId == null) {
+            redisViewTracker.releaseGuest(postId, guestId);
+        } else {
+            redisViewTracker.releaseMember(postId, userId);
         }
     }
 
@@ -231,7 +241,10 @@ public class PostService {
     }
 
     private void increaseViewCount(Post post) {
-        postRepository.increaseViewCount(post.getId());
+        int updated = postRepository.increaseViewCount(post.getId());
+        if (updated != 1) {
+            throw new IllegalStateException("게시글 조회수 증가에 실패했습니다. postId=" + post.getId());
+        }
 
         // 벌크 UPDATE는 영속성 컨텍스트를 거치지 않으므로 응답에 최신 조회수를 반영한다.
         entityManager.refresh(post);
